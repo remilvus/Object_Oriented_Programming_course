@@ -1,7 +1,8 @@
 Code written for laboratories at AGH.
   
 <br/><br/>
-[Project 1:](https://github.com/remilvus/Object_Oriented_Programming_course/tree/master/agh/src/agh/cs/project) a simple wild life simulation. It can be run from [World.java](https://github.com/remilvus/Object_Oriented_Programming_course/blob/master/agh/src/main/World.java)
+#[Project 1:](https://github.com/remilvus/Object_Oriented_Programming_course/tree/master/agh/src/agh/cs/project) a simple wild life simulation. 
+It can be run from [World.java](https://github.com/remilvus/Object_Oriented_Programming_course/blob/master/agh/src/main/World.java)
 
 Input file variables:
 * width - map width
