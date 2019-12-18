@@ -5,6 +5,8 @@ import agh.cs.project.MapBasicLogic.MapDirection;
 import agh.cs.project.MapBasicLogic.Vector2d;
 import agh.cs.project.SavannaMap;
 
+import java.util.Random;
+
 public class SavannaAnimal extends Animal {
     private int energy;
     private final int max_energy;
@@ -30,7 +32,9 @@ public class SavannaAnimal extends Animal {
         this.energy = energy;
         this.max_energy = max_energy;
         this.move_energy = move_energy;
-        ENERGY_PER_NEW = max_energy/4;
+        Random random = new Random();
+        this.direction = MapDirection.fromInt(random.nextInt(1000));
+        ENERGY_PER_NEW = max_energy / 4;
     }
 
     public SavannaAnimal(SavannaAnimal first, SavannaAnimal second, Vector2d initialPosition, int direction){
