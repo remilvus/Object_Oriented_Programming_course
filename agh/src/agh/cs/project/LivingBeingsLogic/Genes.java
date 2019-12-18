@@ -8,17 +8,17 @@ public class Genes {
     private final int[] counter;
 
     private Genes(int[] genes, int[] counter){
-//        List<Integer> intList = new ArrayList<Integer>(genes.length);
-//        for (int i : genes)
-//        {
-//            intList.add(i);
-//        }
-//        Collections.shuffle(intList);
-//        int i=0;
-//        for(int g: intList){
-//            genes[i] = g;
-//            i++;
-//        }
+        List<Integer> intList = new ArrayList<Integer>(genes.length);
+        for (int i : genes)
+        {
+            intList.add(i);
+        }
+        Collections.shuffle(intList);
+        int i=0;
+        for(int g: intList){
+            genes[i] = g;
+            i++;
+        }
         this.genes = genes;
         this.counter = counter; // for showing genes in compact form
     }
@@ -36,7 +36,7 @@ public class Genes {
             changeRandomTo(m);
             m = find_missing();
         }
-        Arrays.sort(genes);
+       // Arrays.sort(genes);
     }
 
     private void changeRandomTo(int gene){
@@ -54,8 +54,6 @@ public class Genes {
 
     @Override
     public String toString() {
-//        int[] genes_clone = genes.clone();
-//        Arrays.sort(genes_clone);
         return Arrays.toString(counter);
     }
 
@@ -86,7 +84,7 @@ public class Genes {
             changeRandomTo(m);
             m = find_missing();
         }
-        Arrays.sort(genes);
+   //     Arrays.sort(genes);
         return new Genes(genes, counter);
     }
 }

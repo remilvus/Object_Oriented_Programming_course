@@ -13,10 +13,10 @@ import java.util.*;
 
 public class SavannaMap extends AbstractWorldMap {
     private final Vector2d lower_left = new Vector2d(0, 0);
-    private final Vector2d upper_right;
-    private final Vector2d lower_left_jungle;
-    private final Vector2d upper_right_jungle;
-    private final Vector2d jungle_dim;
+    private Vector2d upper_right;
+    private Vector2d lower_left_jungle;
+    private Vector2d upper_right_jungle;
+    private Vector2d jungle_dim;
     private final Random rand = new Random();
     private Set<Grass> to_eat = new HashSet<Grass>();
     private final int plant_energy;
@@ -27,8 +27,25 @@ public class SavannaMap extends AbstractWorldMap {
                       int startingAnimals)  throws IllegalArgumentException{
         super();
         this.plant_energy = plant_energy;
+        calculateJungleCoordinates(width, height, jungle_ratio);
+        placeAnimals(startingAnimals, start_energy, start_energy, move_energy);
+    }
 
-        // jungle coordinates
+    private void placeAnimals(int startingAnimals, int start_energy, int max_energy, int move_energy) {
+        int counter = 0;
+        for(; startingAnimals > 0; startingAnimals -= 1){
+            Vector2d v = new Vector2d(rand.nextInt(upper_right.x + 1), rand.nextInt(upper_right.y + 1));
+            counter += 1;
+            if (counter == 1000){break;} // there probably isn't any space available for a new animal
+
+            if(objectAt(v) != null){startingAnimals+=1; continue;}
+            counter = 0;
+            SavannaAnimal a = new SavannaAnimal(this, v, start_energy, max_energy, move_energy);
+            place(a);
+        }
+    }
+
+    private void calculateJungleCoordinates(int width, int height, float jungle_ratio){
         upper_right = new Vector2d(width-1, height-1);
         int jungle_width = (int) (jungle_ratio * width);
         int jungle_height = (int) (jungle_ratio * height);
@@ -43,22 +60,11 @@ public class SavannaMap extends AbstractWorldMap {
         lower_left_jungle = new Vector2d(jungle_start_x, jungle_start_y); // 1, 1
         upper_right_jungle = lower_left_jungle.add(new Vector2d(jungle_width - 1, jungle_height - 1)); //9, 9
 
-        // placing animals
-        int counter = 0; 
-        for(; startingAnimals > 0; startingAnimals -= 1){
-            Vector2d v = new Vector2d(rand.nextInt(upper_right.x + 1), rand.nextInt(upper_right.y + 1));
-            counter += 1;
-            if (counter == 1000){break;} // there probably isn't any space available for a new animal
-
-            if(objectAt(v) != null){startingAnimals+=1; continue;}
-            SavannaAnimal a = new SavannaAnimal(this, v, start_energy, start_energy, move_energy);
-            place(a);
-        }
     }
 
     private void placeGrass(LivingPlace living_place){
         Vector2d v;
-        int try_count = 0;
+        int try_counter = 0;
         while(true){
             if (living_place == LivingPlace.JUNGLE){ // placing in jungle
                 v = new Vector2d(rand.nextInt(jungle_dim.x), rand.nextInt(jungle_dim.y)).add(lower_left_jungle);
@@ -69,14 +75,15 @@ public class SavannaMap extends AbstractWorldMap {
                 if ((v.follows(lower_left_jungle) && v.precedes(upper_right_jungle))){continue;}
             }
             if (objectAt(v) == null){
+                try_counter = 0;
                 Grass grass = new Grass(v);
                 grass.living_place = living_place;
                 grass.energy = plant_energy;
                 this.place(grass);
                 break;
             }
-            try_count += 1;
-            if(try_count == 1000){break;} // there probably isn't any space available for a new grass
+            try_counter += 1;
+            if(try_counter == 1000){break;} // there probably isn't any space available for a new grass
         }
     }
 
@@ -140,38 +147,38 @@ public class SavannaMap extends AbstractWorldMap {
         }
         return position;
     }
-
+    
     public void nextDay(){
         // moving animals
         for (SavannaAnimal a: animals){
             a.moveOneself();
         }
+        
+        feedAnimals();
+        reproduceAnimals();
+        removeDead();
 
-        // eating grass
-        for (Grass g: to_eat){
-            Object obj = objectAt(g.getPosition());
-            if (obj instanceof SavannaAnimal){((SavannaAnimal)obj).feed(g.energy);}
-            else{
-                assert obj instanceof SavannaAnimalSet;
-                SavannaAnimalSet set = (SavannaAnimalSet) obj;
-                Pair<SavannaAnimal, SavannaAnimal> top = set.getTopPair();
-                if (top.getValue().isStronger(top.getKey())) {top.getValue().feed(g.energy);}
-                else if (top.getKey().isStronger(top.getValue())) {top.getKey().feed(g.energy);}
-                else // both animals are equally strong -> divide grass among them
-                {
-                    SavannaAnimalSet eating_animals = set.getAllWith(top.getKey().getEnergy());
-                    int portion = g.energy / eating_animals.size();
-                    Iterator animal_set_it = eating_animals.iterator();
-                    while (animal_set_it.hasNext()){
-                        ((SavannaAnimal)animal_set_it.next()).feed(portion);
-                    }
+        // growing grass
+        placeGrass(LivingPlace.JUNGLE);
+        placeGrass(LivingPlace.SAVANNA);
+    }
+
+    private void removeDead() {
+        List<SavannaAnimal> to_remove = new LinkedList<>();
+        for (SavannaAnimal a : animals) {
+            if (!a.is_alive()) {
+                to_remove.add(a);
+                animalHashMap.remove(a.getPosition());
+                Object at_animal = objectAt(a.getPosition());
+                if (at_animal instanceof SavannaAnimalSet){
+                    removeFromSet(a, (SavannaAnimalSet) at_animal);
                 }
             }
-            grassHashMap.remove(g.getPosition());
         }
-        to_eat.clear();
+        animals.removeAll(to_remove);
+    }
 
-        // reproduction
+    private void reproduceAnimals() {
         for (SavannaAnimalSet set: animal_sets.values()){
             Pair<SavannaAnimal, SavannaAnimal> top = set.getTopPair();
             if (top.getKey().canReproduce() && top.getValue().canReproduce()){
@@ -194,24 +201,31 @@ public class SavannaMap extends AbstractWorldMap {
                 }
             }
         }
+    }
 
-        // removing dead animals
-        List<SavannaAnimal> to_remove = new LinkedList<>();
-        for (SavannaAnimal a : animals) {
-            if (!a.is_alive()) {
-                to_remove.add(a);
-                animalHashMap.remove(a.getPosition());
-                Object at_animal = objectAt(a.getPosition());
-                if (at_animal instanceof SavannaAnimalSet){
-                    removeFromSet(a, (SavannaAnimalSet) at_animal);
+    private void feedAnimals() {
+        for (Grass g: to_eat){
+            Object obj = objectAt(g.getPosition());
+            if (obj instanceof SavannaAnimal){((SavannaAnimal)obj).feed(g.energy);}
+            else{
+                assert obj instanceof SavannaAnimalSet;
+                SavannaAnimalSet set = (SavannaAnimalSet) obj;
+                Pair<SavannaAnimal, SavannaAnimal> top = set.getTopPair();
+                if (top.getValue().isStronger(top.getKey())) {top.getValue().feed(g.energy);}
+                else if (top.getKey().isStronger(top.getValue())) {top.getKey().feed(g.energy);}
+                else // both animals are equally strong -> divide grass among them
+                {
+                    SavannaAnimalSet eating_animals = set.getAllWith(top.getKey().getEnergy());
+                    int portion = g.energy / eating_animals.size();
+                    Iterator animal_set_it = eating_animals.iterator();
+                    while (animal_set_it.hasNext()){
+                        ((SavannaAnimal)animal_set_it.next()).feed(portion);
+                    }
                 }
             }
+            grassHashMap.remove(g.getPosition());
         }
-        animals.removeAll(to_remove);
-
-        // growing grass
-        placeGrass(LivingPlace.JUNGLE);
-        placeGrass(LivingPlace.SAVANNA);
+        to_eat.clear();
     }
 
     @Override
