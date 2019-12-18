@@ -1,11 +1,25 @@
 { 
-  "width": 50,
+  "width": 100,
   "height": 30,
   "startEnergy": 100,
   "moveEnergy": 1,
   "plantEnergy": 50,
-  "startingAnimals": 300,
+  "startingAnimals": 100,
   "jungleRatio": 0.3,
-  "epochs": 300,
-  "verbose": 1
+  "epochs": 1000,
+  "waitTime": 100,
+  "fontSize": 12,
+  "logFile": 1,
+  "otherInput": { "width": 600,
+    "height": 300,
+    "startEnergy": 1000,
+    "moveEnergy": 1,
+    "plantEnergy": 100,
+    "startingAnimals": 4000,
+    "jungleRatio": 0.3,
+    "epochs": 10000,
+    "waitTime": 1,
+    "fontSize": 2,
+    "logFile": 0
+  }
 }
