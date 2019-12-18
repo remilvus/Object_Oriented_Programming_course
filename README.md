@@ -13,4 +13,4 @@ Input file variables:
 * epochs - how long to run the simulation for
 * waitTime - ms of time to wait between epochs
 * fontSize - size of font for map visualization
-* logFile - 1 for logging map every day to `output.txt`, antyhing else disables logging
+* logFile - `1` for logging map every day to `output.txt`, antyhing else disables logging
